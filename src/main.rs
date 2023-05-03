@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
-use std::{collections::HashMap, fmt, io::ErrorKind, str::FromStr};
+#![allow(unused_imports)]
+use std::{collections::HashMap };
 
 use warp::{
     cors::CorsForbidden, http::Method, http::StatusCode, reject::Reject, Filter, Rejection, Reply,
@@ -36,66 +37,7 @@ impl Store {
         serde_json::from_str(file).expect("can't read question.json")
     }
 
-    // fn add_question(mut self, question: Question) -> Self {
-    //     self.questions.insert(question.id.clone(), question);
-    //     self
-    // }
 }
-
-// #[derive(Debug)]
-// struct InvalidId;
-
-// impl Reject for InvalidId {}
-
-// impl Question {
-//     pub fn new(id: QuestionId, title: String, content: String, tags: Option<Vec<String>>) -> Self {
-//         Self {
-//             id,
-//             title,
-//             content,
-//             tags,
-//         }
-//     }
-
-//     fn update_title(&self, new_title: String) -> Self {
-//         Question {
-//             id: self.id.clone(),
-//             title: new_title,
-//             content: self.content.clone(),
-//             tags: self.tags.clone(),
-//         }
-//     }
-// }
-
-// impl fmt::Display for Question {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         write!(
-//             f,
-//             "{}, title: {}. content: {}, tags: {:?}",
-//             self.id, self.title, self.content, self.tags
-//         )
-//     }
-// }
-
-// impl fmt::Display for QuestionId {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         write!(f, "id : {}", self.0)
-//     }
-// }
-
-// impl FromStr for QuestionId {
-//     type Err = std::io::Error;
-
-//     fn from_str(id: &str) -> Result<Self, Self::Err> {
-//         match id.is_empty() {
-//             false => Ok(QuestionId(id.to_string())),
-//             true => Err(std::io::Error::new(
-//                 ErrorKind::InvalidInput,
-//                 "No id provided",
-//             )),
-//         }
-//     }
-// }
 
 #[tokio::main]
 async fn main() {
@@ -121,17 +63,10 @@ async fn main() {
 }
 
 async fn get_questions(store: Store) -> Result<impl warp::Reply, warp::Rejection> {
-    // let question = Question::new(
-    //     QuestionId::from_str("1").expect("No id provided"),
-    //     "First Question".to_string(),
-    //     "Content of Question".to_string(),
-    //     Some(vec!["faq".to_string()]),
-    // );
 
-    // match question.id.0.parse::<i32>() {
-    //     Ok(_) => Ok(warp::reply::json(&question)),
-    //     Err(_) => Err(warp::reject::custom(InvalidId)),
-    // }
+    let res: Vec<Question> = store.questions.values().cloned().collect();
+
+    Ok(warp::reply::json(&res))
 }
 
 async fn return_error(r: Rejection) -> Result<impl Reply, Rejection> {
@@ -139,11 +74,6 @@ async fn return_error(r: Rejection) -> Result<impl Reply, Rejection> {
         Ok(warp::reply::with_status(
             error.to_string(),
             StatusCode::FORBIDDEN,
-        ))
-    } else if let Some(_) = r.find::<InvalidId>() {
-        Ok(warp::reply::with_status(
-            "No valid ID presented".to_string(),
-            StatusCode::UNPROCESSABLE_ENTITY,
         ))
     } else {
         Ok(warp::reply::with_status(
