@@ -2,8 +2,10 @@ use std::{collections::HashMap, sync::Arc};
 
 use tokio::sync::RwLock;
 
-use crate::types::{question::{QuestionId, Question}, answer::{AnswerId, Answer}};
-
+use crate::types::{
+    answer::{Answer, AnswerId},
+    question::{Question, QuestionId},
+};
 
 #[derive(Clone, Debug)]
 pub struct Store {
@@ -22,5 +24,11 @@ impl Store {
     fn init() -> HashMap<QuestionId, Question> {
         let file = include_str!("../questions.json");
         serde_json::from_str(file).expect("can't read question.json")
+    }
+}
+
+impl Default for Store {
+    fn default() -> Self {
+        Self::new()
     }
 }

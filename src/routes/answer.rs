@@ -3,8 +3,13 @@ use std::collections::HashMap;
 use handle_errors::Error;
 use warp::hyper::StatusCode;
 
-use crate::{store::Store, types::{answer::{Answer, AnswerId}, question::QuestionId}};
-
+use crate::{
+    store::Store,
+    types::{
+        answer::{Answer, AnswerId},
+        question::QuestionId,
+    },
+};
 
 pub async fn add_answers(
     store: Store,

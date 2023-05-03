@@ -1,8 +1,12 @@
-use REST_api::{store::Store, routes::{question::{get_questions, add_question, update_question, delete_question}, answer::add_answers},};
 use handle_errors::return_error;
-use warp::{ http::Method, Filter};
-
-
+use warp::{http::Method, Filter};
+use REST_api::{
+    routes::{
+        answer::add_answers,
+        question::{add_question, delete_question, get_questions, update_question},
+    },
+    store::Store,
+};
 
 #[tokio::main]
 async fn main() {
@@ -58,6 +62,6 @@ async fn main() {
         .or(add_answers)
         .with(cors)
         .recover(return_error);
-    
+
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
