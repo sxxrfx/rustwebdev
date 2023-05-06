@@ -1,0 +1,23 @@
+    Finished dev [unoptimized + debuginfo] target(s) in 0.08s
+     Running `/home/sg/.cargo/target/debug/rest_api`
+[2023-05-06T08:57:56Z ERROR rest_api] This is an error!
+[2023-05-06T08:57:56Z INFO  rest_api] This is an info!
+[2023-05-06T08:57:56Z WARN  rest_api] This is an warning!
+[2023-05-06T08:57:56Z INFO  warp::server] Server::run; addr=127.0.0.1:3030
+[2023-05-06T08:57:56Z INFO  warp::server] listening on http://127.0.0.1:3030
+[2023-05-06T08:58:05Z DEBUG hyper::proto::h1::io] parsed 5 headers
+[2023-05-06T08:58:05Z DEBUG hyper::proto::h1::conn] incoming body is content-length (61 bytes)
+[2023-05-06T08:58:05Z DEBUG hyper::proto::h1::conn] incoming body completed
+[2023-05-06T08:58:05Z DEBUG hyper::proto::h1::io] flushed 156 bytes
+[2023-05-06T08:58:05Z DEBUG hyper::proto::h1::conn] read eof
+[2023-05-06T08:58:09Z DEBUG hyper::proto::h1::io] parsed 5 headers
+[2023-05-06T08:58:09Z DEBUG hyper::proto::h1::conn] incoming body is content-length (61 bytes)
+[2023-05-06T08:58:09Z DEBUG hyper::proto::h1::conn] incoming body completed
+[2023-05-06T08:58:09Z DEBUG warp::filters::body] content-type "application/x-www-form-urlencoded" doesn't match application/json
+[2023-05-06T08:58:09Z DEBUG hyper::proto::h1::io] flushed 139 bytes
+[2023-05-06T08:58:09Z DEBUG hyper::proto::h1::conn] read eof
+[2023-05-06T08:58:17Z DEBUG hyper::proto::h1::io] parsed 5 headers
+[2023-05-06T08:58:17Z DEBUG hyper::proto::h1::conn] incoming body is content-length (69 bytes)
+[2023-05-06T08:58:17Z DEBUG hyper::proto::h1::conn] incoming body completed
+[2023-05-06T08:58:17Z DEBUG hyper::proto::h1::io] flushed 129 bytes
+[2023-05-06T08:58:17Z DEBUG hyper::proto::h1::conn] read eof

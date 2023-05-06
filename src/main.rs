@@ -1,18 +1,41 @@
+#![allow(non_snake_case)]
+#![warn(clippy::all)]
 use handle_errors::return_error;
-use warp::{http::Method, Filter};
-use REST_api::{
+use rest_api::{
     routes::{
         answer::add_answers,
         question::{add_question, delete_question, get_questions, update_question},
     },
     store::Store,
 };
+use warp::{http::Method, Filter};
 
 #[tokio::main]
 async fn main() {
+    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
+    let log = warp::log::custom(|info| {
+        // Use a log macro, or slog, or println, or whatever!
+        log::info!(
+            "{} {} {} {:?} from {} with {:?}",
+            info.method(),
+            info.path(),
+            info.status(),
+            info.elapsed(),
+            info.remote_addr().unwrap(),
+            info.request_headers()
+        );
+    });
+    // let route = warp::any().map(warp::reply).with(log);
+
+    log::error!("This is an error!");
+    log::info!("This is an info!");
+    log::warn!("This is an warning!");
+
     let store = Store::new();
 
     let store_filter = warp::any().map(move || store.clone());
+
+    let id_filter = warp::any().map(|| uuid::Uuid::new_v4().to_string());
 
     let cors = warp::cors()
         .allow_any_origin()
@@ -24,6 +47,7 @@ async fn main() {
         .and(warp::path::end())
         .and(warp::query())
         .and(store_filter.clone())
+        .and(id_filter)
         .and_then(get_questions);
 
     let add_question = warp::post()
@@ -61,6 +85,7 @@ async fn main() {
         .or(delete_question)
         .or(add_answers)
         .with(cors)
+        .with(log)
         .recover(return_error);
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;

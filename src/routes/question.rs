@@ -11,12 +11,16 @@ use crate::{
 };
 use handle_errors::Error;
 
+///
 pub async fn get_questions(
     params: HashMap<String, String>,
     store: Store,
+    id: String,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+    log::info!("{} Start querying questions", id);
     if !params.is_empty() {
         let pagination = extract_pagination(params)?;
+        log::info!("{} Pagination set {:?}",id, &pagination);
         let res: Vec<Question> = store.questions.read().await.values().cloned().collect();
         let res = res
             .get(pagination.start..pagination.end)
@@ -24,12 +28,14 @@ pub async fn get_questions(
 
         Ok(warp::reply::json(&res))
     } else {
+        log::info!("{} No pagination used", id);
         let res: Vec<Question> = store.questions.read().await.values().cloned().collect();
 
         Ok(warp::reply::json(&res))
     }
 }
 
+///
 pub async fn add_question(
     store: Store,
     question: Question,
@@ -43,6 +49,7 @@ pub async fn add_question(
     Ok(warp::reply::with_status("Question added", StatusCode::OK))
 }
 
+///
 pub async fn update_question(
     id: String,
     store: Store,
@@ -56,6 +63,7 @@ pub async fn update_question(
     Ok(warp::reply::with_status("Question updated", StatusCode::OK))
 }
 
+///
 pub async fn delete_question(
     id: String,
     store: Store,
