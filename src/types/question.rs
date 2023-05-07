@@ -15,4 +15,11 @@ pub struct Question {
 
 /// Tuple struct for parsing the ID of the `Question`
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
-pub struct QuestionId(pub String);
+pub struct QuestionId(pub i32);
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct NewQuestion {
+    pub title: String,
+    pub content: String,
+    pub tags: Option<Vec<String>>,
+}

@@ -1,10 +1,10 @@
-#![allow(non_snake_case)]
-#![warn(clippy::all)]
 use handle_errors::return_error;
 use rest_api::{
     routes::{
         answer::add_answers,
-        question::{add_question, delete_question, get_questions, update_question},
+        question::{
+            add_question, delete_question, get_questions, update_question,
+        },
     },
     store::Store,
 };
@@ -13,13 +13,21 @@ use warp::{http::Method, Filter};
 
 #[tokio::main]
 async fn main() {
+    dotenvy::dotenv().ok();
 
-    let log_filter = std::env::var("RUST_LOG")
-        .unwrap_or_else(|_|
-            "rest_api=info,warp=error".to_owned()
-        );
+    let database_url =
+        dotenvy::var("DATABASE_URL").expect("Expected DATABASE_URL");
 
-    let store = Store::new();
+    let log_filter = std::env::var("RUST_LOG").unwrap_or_else(|_| {
+        "handle_errors=warn,rest_api=info,warp=error".to_owned()
+    });
+
+    let store = Store::new(&database_url).await;
+
+    sqlx::migrate!()
+        .run(&store.clone().connection)
+        .await
+        .expect("Cannot run migration");
 
     let store_filter = warp::any().map(move || store.clone());
 
@@ -31,7 +39,12 @@ async fn main() {
     let cors = warp::cors()
         .allow_any_origin()
         .allow_header("content-type")
-        .allow_methods(&[Method::PUT, Method::DELETE, Method::GET, Method::POST]);
+        .allow_methods(&[
+            Method::PUT,
+            Method::DELETE,
+            Method::GET,
+            Method::POST,
+        ]);
 
     let get_questions = warp::get()
         .and(warp::path("questions"))
@@ -39,7 +52,7 @@ async fn main() {
         .and(warp::query())
         .and(store_filter.clone())
         .and_then(get_questions)
-        .with(warp::trace( |info| {
+        .with(warp::trace(|info| {
             tracing::info_span!(
                 "get_questions request",
                 method = %info.method(),
@@ -57,15 +70,15 @@ async fn main() {
 
     let update_question = warp::put()
         .and(warp::path("questions"))
-        .and(warp::path::param::<String>())
+        .and(warp::path::param::<i32>())
         .and(warp::path::end())
         .and(store_filter.clone())
         .and(warp::body::json())
         .and_then(update_question);
 
-    let delete_question = warp::put()
+    let delete_question = warp::delete()
         .and(warp::path("questions"))
-        .and(warp::path::param::<String>())
+        .and(warp::path::param::<i32>())
         .and(warp::path::end())
         .and(store_filter.clone())
         .and_then(delete_question);

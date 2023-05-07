@@ -16,4 +16,13 @@ pub struct Answer {
 
 /// An tuple struct to capture String for the `Answer`'s ID
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
-pub struct AnswerId(pub String);
+pub struct AnswerId(pub i32);
+
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct NewAnswer {
+    /// String content of the NewAnswer
+    pub content: String,
+    /// `QuestionId` of the corresponding `Question`
+    pub question_id: QuestionId,
+}
