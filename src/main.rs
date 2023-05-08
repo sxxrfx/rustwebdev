@@ -51,22 +51,7 @@ async fn main() {
         .and(warp::path::end())
         .and(warp::query())
         .and(store_filter.clone())
-        .and_then(get_questions)
-        .with(warp::trace(|info| {
-            tracing::info_span!(
-                "get_questions request",
-                method = %info.method(),
-                path = %info.path(),
-                id = %uuid::Uuid::new_v4(),
-            )
-        }));
-
-    let add_question = warp::post()
-        .and(warp::path("questions"))
-        .and(warp::path::end())
-        .and(store_filter.clone())
-        .and(warp::body::json())
-        .and_then(add_question);
+        .and_then(get_questions);
 
     let update_question = warp::put()
         .and(warp::path("questions"))
@@ -83,11 +68,18 @@ async fn main() {
         .and(store_filter.clone())
         .and_then(delete_question);
 
+    let add_question = warp::post()
+        .and(warp::path("questions"))
+        .and(warp::path::end())
+        .and(store_filter.clone())
+        .and(warp::body::json())
+        .and_then(add_question);
+
     let add_answers = warp::post()
         .and(warp::path("answers"))
         .and(warp::path::end())
         .and(store_filter.clone())
-        .and(warp::body::form())
+        .and(warp::body::json())
         .and_then(add_answers);
 
     let routes = get_questions

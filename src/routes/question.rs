@@ -40,11 +40,12 @@ pub async fn add_question(
     store: Store,
     new_question: NewQuestion,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    if let Err(e) = store.add_question(new_question).await {
-        return Err(warp::reject::custom(e));
+    match store.add_question(new_question).await {
+        Ok(_) => {
+            Ok(warp::reply::with_status("Question added", StatusCode::OK))
+        },
+        Err(e) => Err(warp::reject::custom(e)),
     }
-
-    Ok(warp::reply::with_status("Question added", StatusCode::OK))
 }
 
 ///

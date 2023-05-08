@@ -51,7 +51,10 @@ impl Store {
             .await
         {
             Ok(questions) => Ok(questions),
-            Err(_) => Err(Error::DatabaseQueryError),
+            Err(e) => {
+                tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                Err(Error::DatabaseQueryError)
+            }
         }
     }
 
@@ -61,7 +64,9 @@ impl Store {
         new_question: NewQuestion,
     ) -> Result<Question, handle_errors::Error> {
         match sqlx::query(
-            "INSERT INTO questions (title, content, tags) VAULES ($1 $2 $3) RETURNING id, title, content, tags"
+            "INSERT INTO questions (title, content, tags)
+                 VALUES ($1, $2, $3)
+                 RETURNING id, title, content, tags",
         )
         .bind(new_question.title)
         .bind(new_question.content)
@@ -75,7 +80,10 @@ impl Store {
         .fetch_one(&self.connection)
         .await{
             Ok(question) => Ok(question),
-            Err(_) => Err(Error::DatabaseQueryError),
+            Err(e) => {
+                tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                Err(Error::DatabaseQueryError)
+            }
         }
     }
 
@@ -105,7 +113,10 @@ impl Store {
         .await
         {
             Ok(question) => Ok(question),
-            Err(_) => Err(Error::DatabaseQueryError),
+            Err(e) => {
+                tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                Err(Error::DatabaseQueryError)
+            }
         }
     }
 
@@ -120,7 +131,10 @@ impl Store {
             .await
         {
             Ok(_) => Ok(true),
-            Err(_) => Err(Error::DatabaseQueryError),
+            Err(e) => {
+                tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                Err(Error::DatabaseQueryError)
+            }
         }
     }
 
@@ -130,19 +144,24 @@ impl Store {
         new_answer: NewAnswer,
     ) -> Result<Answer, handle_errors::Error> {
         match sqlx::query(
-            "INSERT INTO questions (content, question_id) VAULES ($1 $2) RETURNING id, content, question_id"
+            "INSERT INTO answers (content, corresponding_question) 
+                VALUES ($1, $2) 
+                RETURNING id, content, corresponding_question"
         )
         .bind(new_answer.content)
         .bind(new_answer.question_id.0)
         .map(|row: PgRow| Answer {
             id: AnswerId(row.get("id")),
             content: row.get("content"),
-            question_id: QuestionId(row.get("tags")),
+            question_id: QuestionId(row.get("corresponding_question")),
         })
         .fetch_one(&self.connection)
         .await{
-            Ok(question) => Ok(question),
-            Err(_) => Err(Error::DatabaseQueryError),
+            Ok(answer) => Ok(answer),
+            Err(e) => {
+                tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                Err(Error::DatabaseQueryError)
+            }
         }
     }
 }
