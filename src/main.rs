@@ -19,7 +19,7 @@ async fn main() {
         dotenvy::var("DATABASE_URL").expect("Expected DATABASE_URL");
 
     let log_filter = std::env::var("RUST_LOG").unwrap_or_else(|_| {
-        "handle_errors=warn,rest_api=info,warp=error".to_owned()
+        "handle_errors=debug,rest_api=debug,warp=debug".to_owned()
     });
 
     let store = Store::new(&database_url).await;

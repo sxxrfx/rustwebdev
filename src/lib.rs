@@ -18,3 +18,5 @@ pub mod routes;
 pub mod store;
 /// All type definition
 pub mod types;
+
+pub mod profanity;
