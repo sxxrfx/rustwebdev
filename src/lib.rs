@@ -20,3 +20,5 @@ pub mod store;
 pub mod types;
 
 pub mod profanity;
+
+pub mod config;

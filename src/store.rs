@@ -5,6 +5,7 @@ use sqlx::{
 };
 
 use crate::types::{
+    account::{Account, AccountId},
     answer::{Answer, AnswerId, NewAnswer},
     question::{NewQuestion, Question, QuestionId},
 };
@@ -17,21 +18,17 @@ pub struct Store {
 }
 
 impl Store {
-    /// Creates a new `Store`
-    pub async fn new(db_url: &str) -> Self {
-        let db_pool = match PgPoolOptions::new()
+    pub async fn new(db_url: &str) -> Result<Self, sqlx::Error> {
+        tracing::warn!("{}", db_url);
+        let db_pool = PgPoolOptions::new()
             .max_connections(5)
             .connect(db_url)
-            .await
-        {
-            Ok(pool) => pool,
-            Err(_) => panic!("Could't establish DB connection"),
-        };
-        Self {
-            connection: db_pool,
-        }
-    }
+            .await?;
 
+        Ok(Store {
+            connection: db_pool,
+        })
+    }
     ///
     pub async fn get_questions(
         &self,
@@ -53,7 +50,7 @@ impl Store {
             Ok(questions) => Ok(questions),
             Err(e) => {
                 tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                Err(Error::DatabaseQueryError)
+                Err(Error::DatabaseQueryError(e))
             }
         }
     }
@@ -62,47 +59,17 @@ impl Store {
     pub async fn add_question(
         &self,
         new_question: NewQuestion,
+        account_id: AccountId,
     ) -> Result<Question, handle_errors::Error> {
         match sqlx::query(
-            "INSERT INTO questions (title, content, tags)
-                 VALUES ($1, $2, $3)
-                 RETURNING id, title, content, tags",
+            "INSERT INTO questions (title, content, tags, account_id)
+                 VALUES ($1, $2, $3, $4)
+                 RETURNING id, title, content, tags, account_id",
         )
         .bind(new_question.title)
         .bind(new_question.content)
         .bind(new_question.tags)
-        .map(|row: PgRow| Question {
-            id: QuestionId(row.get("id")),
-            title: row.get("title"),
-            content: row.get("content"),
-            tags: row.get("tags"),
-        })
-        .fetch_one(&self.connection)
-        .await{
-            Ok(question) => Ok(question),
-            Err(e) => {
-                tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                Err(Error::DatabaseQueryError)
-            }
-        }
-    }
-
-    ///
-    pub async fn update_question(
-        &self,
-        question: Question,
-        question_id: i32,
-    ) -> Result<Question, handle_errors::Error> {
-        match sqlx::query(
-            "UPDATE questions
-            SET title = $1, content = $2, tags = $3
-            WHERE id = $4
-            RETURNING id, title, content, tags",
-        )
-        .bind(question.title)
-        .bind(question.content)
-        .bind(question.tags)
-        .bind(question_id)
+        .bind(account_id.0)
         .map(|row: PgRow| Question {
             id: QuestionId(row.get("id")),
             title: row.get("title"),
@@ -115,7 +82,42 @@ impl Store {
             Ok(question) => Ok(question),
             Err(e) => {
                 tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                Err(Error::DatabaseQueryError)
+                Err(Error::DatabaseQueryError(e))
+            }
+        }
+    }
+
+    ///
+    pub async fn update_question(
+        &self,
+        question: Question,
+        question_id: i32,
+        account_id: AccountId,
+    ) -> Result<Question, handle_errors::Error> {
+        match sqlx::query(
+            "UPDATE questions
+            SET title = $1, content = $2, tags = $3
+            WHERE id = $4 and account_id = $5
+            RETURNING id, title, content, tags",
+        )
+        .bind(question.title)
+        .bind(question.content)
+        .bind(question.tags)
+        .bind(question_id)
+        .bind(account_id.0)
+        .map(|row: PgRow| Question {
+            id: QuestionId(row.get("id")),
+            title: row.get("title"),
+            content: row.get("content"),
+            tags: row.get("tags"),
+        })
+        .fetch_one(&self.connection)
+        .await
+        {
+            Ok(question) => Ok(question),
+            Err(e) => {
+                tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                Err(Error::DatabaseQueryError(e))
             }
         }
     }
@@ -133,7 +135,7 @@ impl Store {
             Ok(_) => Ok(true),
             Err(e) => {
                 tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                Err(Error::DatabaseQueryError)
+                Err(Error::DatabaseQueryError(e))
             }
         }
     }
@@ -146,7 +148,7 @@ impl Store {
         match sqlx::query(
             "INSERT INTO answers (content, corresponding_question) 
                 VALUES ($1, $2) 
-                RETURNING id, content, corresponding_question"
+                RETURNING id, content, corresponding_question",
         )
         .bind(new_answer.content)
         .bind(new_answer.question_id.0)
@@ -156,11 +158,92 @@ impl Store {
             question_id: QuestionId(row.get("corresponding_question")),
         })
         .fetch_one(&self.connection)
-        .await{
+        .await
+        {
             Ok(answer) => Ok(answer),
             Err(e) => {
                 tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                Err(Error::DatabaseQueryError)
+                Err(Error::DatabaseQueryError(e))
+            }
+        }
+    }
+
+    pub async fn add_account(
+        &self,
+        account: Account,
+    ) -> Result<bool, handle_errors::Error> {
+        match sqlx::query(
+            "INSERT INTO accounts (email, password)
+        VALUES ($1, $2)",
+        )
+        .bind(account.email)
+        .bind(account.password)
+        .execute(&self.connection)
+        .await
+        {
+            Ok(_) => Ok(true),
+            Err(e) => {
+                tracing::event!(
+                    tracing::Level::ERROR,
+                    code = e
+                        .as_database_error()
+                        .unwrap()
+                        .code()
+                        .unwrap()
+                        .parse::<i32>()
+                        .unwrap(),
+                    db_message = e.as_database_error().unwrap().message(),
+                    constraint = e
+                        .as_database_error()
+                        .unwrap()
+                        .constraint()
+                        .unwrap()
+                );
+
+                Err(Error::DatabaseQueryError(e))
+            }
+        }
+    }
+
+    pub async fn get_account(
+        &self,
+        email: String,
+    ) -> Result<Account, handle_errors::Error> {
+        match sqlx::query("SELECT * from accounts where email = $1")
+            .bind(email)
+            .map(|row: PgRow| Account {
+                id: Some(AccountId(row.get("id"))),
+                email: row.get("email"),
+                password: row.get("password"),
+            })
+            .fetch_one(&self.connection)
+            .await
+        {
+            Ok(account) => Ok(account),
+            Err(error) => {
+                tracing::event!(tracing::Level::ERROR, "{:?}", error);
+                Err(Error::DatabaseQueryError(error))
+            }
+        }
+    }
+
+    pub(crate) async fn is_question_owner(
+        &self,
+        question_id: i32,
+        account_id: &AccountId,
+    ) -> Result<bool, handle_errors::Error> {
+        match sqlx::query(
+            "SELECT * from questions where id = $1 and account_id = $2",
+        )
+        .bind(question_id)
+        .bind(account_id.0)
+        .fetch_optional(&self.connection)
+        .await
+        {
+            Ok(question) => Ok(question.is_some()),
+            Err(error) => {
+                tracing::event!(tracing::Level::ERROR, "{:?}", error);
+                Err(Error::DatabaseQueryError(error))
             }
         }
     }

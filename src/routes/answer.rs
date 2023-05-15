@@ -1,11 +1,12 @@
 use warp::hyper::StatusCode;
 
 use crate::{
-    profanity::check_profanity, store::Store, types::answer::NewAnswer,
+    profanity::check_profanity, store::Store, types::{answer::NewAnswer, account::Session},
 };
 
 ///
 pub async fn add_answers(
+    session: Session,
     store: Store,
     new_answer: NewAnswer,
 ) -> Result<impl warp::Reply, warp::Rejection> {

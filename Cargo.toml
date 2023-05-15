@@ -1,5 +1,5 @@
 [package]
-name = "rest_api"
+name = "rustwebdev"
 version = "0.1.0"
 edition = "2021"
 
@@ -19,3 +19,12 @@ sqlx = { version = "0.6.3", features = ["runtime-tokio-rustls", "migrate", "post
 reqwest = { version = "0.11.17", features = ["json"] }
 reqwest-middleware = "0.2.1"
 reqwest-retry = "0.2.2"
+rand = "0.8.5"
+rust-argon2 = "1.0.0"
+paseto = "2.0.2"
+chrono = "0.4.24"
+clap = { version = "4.2.7", features = ["derive"] }
+proc-macro2 = "1.0.56"
+
+[build-dependencies]
+platforms = "3.0.2"
