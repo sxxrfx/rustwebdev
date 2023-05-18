@@ -1,7 +1,5 @@
-use core::panic;
 use std::env;
 
-use clap::Parser;
 use handle_errors::return_error;
 use rustwebdev::{
     config::Config,

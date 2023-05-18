@@ -27,4 +27,4 @@ clap = { version = "4.2.7", features = ["derive"] }
 proc-macro2 = "1.0.56"
 
 [build-dependencies]
-platforms = "3.0.2"
+platforms = "2.0.0"
