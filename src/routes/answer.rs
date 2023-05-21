@@ -6,7 +6,7 @@ use crate::{
 
 ///
 pub async fn add_answers(
-    session: Session,
+    _session: Session,
     store: Store,
     new_answer: NewAnswer,
 ) -> Result<impl warp::Reply, warp::Rejection> {

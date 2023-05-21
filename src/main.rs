@@ -11,6 +11,7 @@ use warp::{http::Method, Filter};
 
 #[tokio::main]
 async fn main() -> Result<(), handle_errors::Error> {
+    dotenvy::dotenv().ok();
     let config = Config::new().expect("Config can't be set");
 
     let log_filter = std::env::var("RUST_LOG").unwrap_or_else(|_| {

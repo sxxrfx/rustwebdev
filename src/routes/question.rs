@@ -114,7 +114,7 @@ pub async fn update_question(
 ///
 pub async fn delete_question(
     id: i32,
-    session: Session,
+    _session: Session,
     store: Store,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     match store.delete_question(id).await {
